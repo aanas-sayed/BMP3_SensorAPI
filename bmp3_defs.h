@@ -136,10 +136,10 @@ extern "C" {
 #define BMP3_SETTLE_TIME_PRESS                  UINT16_C(392)
 
 /**\name BMP3 temperature settling time (micro secs) */
-#define BMP3_SETTLE_TIME_TEMP                   UINT16_C(313)
+#define BMP3_SETTLE_TIME_TEMP                   UINT16_C(163)
 
 /**\name BMP3 adc conversion time (micro secs) */
-#define BMP3_ADC_CONV_TIME                      UINT16_C(2000)
+#define BMP3_ADC_CONV_TIME                      UINT16_C(2020)
 
 /**\name Register Address */
 #define BMP3_REG_CHIP_ID                        UINT8_C(0x00)
