@@ -41,6 +41,17 @@
 
 #include "bmp3.h"
 
+#ifdef __ZEPHYR__
+/**
+ * @brief Logging module for BMP3 sensor driver
+ *
+ * Module for logging information about the BMP3 sensor driver. The log
+ * level can be configured using CONFIG_BMP3_LOG_LEVEL.
+ *
+ */
+LOG_MODULE_REGISTER(bmp3, CONFIG_BMP3_LOG_LEVEL);
+#endif
+
 /***************** Static function declarations ******************************/
 
 /*!
@@ -739,6 +750,9 @@ int8_t bmp3_init(struct bmp3_dev *dev)
 {
     int8_t rslt;
     uint8_t chip_id = 0;
+#ifdef __ZEPHYR__
+    LOG_DBG("BMP3 initialization started");
+#endif
 
     /* Check for null pointer in the device structure */
     rslt = null_ptr_check(dev);
@@ -758,6 +772,9 @@ int8_t bmp3_init(struct bmp3_dev *dev)
              * extra byte */
             dev->dummy_byte = 0;
         }
+#ifdef __ZEPHYR__
+        LOG_DBG("BMP3 interface selected as %d, dummy byte = %d", dev->intf, dev->dummy_byte);
+#endif
 
         /* Read the chip-id of bmp3 sensor */
         rslt = bmp3_get_regs(BMP3_REG_CHIP_ID, &chip_id, 1, dev);
@@ -769,6 +786,10 @@ int8_t bmp3_init(struct bmp3_dev *dev)
             if ((chip_id == BMP3_CHIP_ID) || (chip_id == BMP390_CHIP_ID))
             {
                 dev->chip_id = chip_id;
+
+#ifdef __ZEPHYR__
+                LOG_DBG("BMP3 chip id = %d", chip_id);
+#endif
 
                 /* Reset the sensor */
                 rslt = bmp3_soft_reset(dev);

@@ -45,6 +45,12 @@
 
 /* Header includes */
 #include "bmp3_defs.h"
+#ifdef __ZEPHYR__
+#include <zephyr/logging/log.h>
+#ifndef CONFIG_BMP3_LOG_LEVEL
+#define CONFIG_BMP3_LOG_LEVEL LOG_LEVEL_INF
+#endif /* CONFIG_BMP3_LOG_LEVEL */
+#endif /* __ZEPHYR__ */
 
 /*! CPP guard */
 #ifdef __cplusplus
