@@ -1,70 +1,82 @@
 /**
-* Copyright (c) 2020 Bosch Sensortec GmbH. All rights reserved.
-*
-* BSD-3-Clause
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*
-* 1. Redistributions of source code must retain the above copyright
-*    notice, this list of conditions and the following disclaimer.
-*
-* 2. Redistributions in binary form must reproduce the above copyright
-*    notice, this list of conditions and the following disclaimer in the
-*    documentation and/or other materials provided with the distribution.
-*
-* 3. Neither the name of the copyright holder nor the names of its
-*    contributors may be used to endorse or promote products derived from
-*    this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-* COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-* POSSIBILITY OF SUCH DAMAGE.
-*
-* @file       bmp3_selftest.c
-* @date       2020-07-20
-* @version    v2.0.1
-*
-*/
+ * Copyright (c) 2020 Bosch Sensortec GmbH. All rights reserved.
+ *
+ * BSD-3-Clause
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file       bmp3_selftest.c
+ * @date       2020-07-20
+ * @version    v2.0.1
+ *
+ */
 
 #include "bmp3_selftest.h"
+#include "../bmp3.h"
+
+#ifdef __ZEPHYR__
+/**
+ * @brief Log level for BMP3 sensor driver
+ *
+ * Module for logging information about the BMP3 sensor driver. The log
+ * level can be configured using CONFIG_BMP3_SELFTEST_LOG_LEVEL.
+ *
+ */
+LOG_MODULE_REGISTER(bmp3_selftest, CONFIG_BMP3_LOG_LEVEL);
+#endif
 
 #ifndef BMP3_DOUBLE_PRECISION_COMPENSATION
 
 /* 0 degree celsius */
-#define BMP3_MIN_TEMPERATURE  INT16_C(0)
+#define BMP3_MIN_TEMPERATURE INT16_C(0)
 
 /* 40 degree celsius */
-#define BMP3_MAX_TEMPERATURE  INT16_C(4000)
+#define BMP3_MAX_TEMPERATURE INT16_C(4000)
 
 /* 900 hecto Pascals */
-#define BMP3_MIN_PRESSURE     UINT32_C(90000)
+#define BMP3_MIN_PRESSURE UINT32_C(90000)
 
 /* 1100 hecto Pascals */
-#define BMP3_MAX_PRESSURE     UINT32_C(110000)
+#define BMP3_MAX_PRESSURE UINT32_C(110000)
 
 #else
 
 /* 0 degree celsius */
-#define BMP3_MIN_TEMPERATURE  (0.0f)
+#define BMP3_MIN_TEMPERATURE (0.0f)
 
 /* 40 degree celsius */
-#define BMP3_MAX_TEMPERATURE  (40.0f)
+#define BMP3_MAX_TEMPERATURE (40.0f)
 
 /* 900 hecto Pascals */
-#define BMP3_MIN_PRESSURE     (900.0f)
+#define BMP3_MIN_PRESSURE (900.0f)
 
 /* 1100 hecto Pascals */
-#define BMP3_MAX_PRESSURE     (1100.0f)
+#define BMP3_MAX_PRESSURE (1100.0f)
 #endif
 
 /*!
@@ -103,16 +115,21 @@ static int8_t validate_trimming_param(struct bmp3_dev *dev);
  */
 int8_t bmp3_selftest_check(struct bmp3_dev *dev)
 {
+#ifdef __ZEPHYR__
+    LOG_INF("BMP3 self-test check started");
+#endif
+
     int8_t rslt;
 
     /* Variable used to select the sensor component */
     uint8_t sensor_comp;
 
     /* Variable used to store the compensated data */
-    struct bmp3_data data = { 0 };
+    struct bmp3_data data = {0};
 
     /* Used to select the settings user needs to change */
     uint16_t settings_sel;
+    struct bmp3_settings settings = {0};
 
     /* Reset the sensor */
     rslt = bmp3_soft_reset(dev);
@@ -133,21 +150,21 @@ int8_t bmp3_selftest_check(struct bmp3_dev *dev)
         if (rslt == BMP3_SENSOR_OK)
         {
             /* Select the pressure and temperature sensor to be enabled */
-            dev->settings.press_en = BMP3_ENABLE;
-            dev->settings.temp_en = BMP3_ENABLE;
+            settings.press_en = BMP3_ENABLE;
+            settings.temp_en = BMP3_ENABLE;
 
             /* Select the output data rate and over sampling settings for pressure and temperature */
-            dev->settings.odr_filter.press_os = BMP3_NO_OVERSAMPLING;
-            dev->settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
-            dev->settings.odr_filter.odr = BMP3_ODR_25_HZ;
+            settings.odr_filter.press_os = BMP3_NO_OVERSAMPLING;
+            settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
+            settings.odr_filter.odr = BMP3_ODR_25_HZ;
 
             /* Assign the settings which needs to be set in the sensor */
             settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR;
-            rslt = bmp3_set_sensor_settings(settings_sel, dev);
+            rslt = bmp3_set_sensor_settings(settings_sel, &settings, dev);
             if (rslt == BMP3_SENSOR_OK)
             {
-                dev->settings.op_mode = BMP3_MODE_NORMAL;
-                rslt = bmp3_set_op_mode(dev);
+                settings.op_mode = BMP3_MODE_NORMAL;
+                rslt = bmp3_set_op_mode(&settings, dev);
                 if (rslt == BMP3_SENSOR_OK)
                 {
                     dev->delay_us(40000, dev->intf_ptr);
@@ -168,8 +185,8 @@ int8_t bmp3_selftest_check(struct bmp3_dev *dev)
             /* Set the power mode to sleep mode */
             if (rslt == BMP3_SENSOR_OK)
             {
-                dev->settings.op_mode = BMP3_MODE_SLEEP;
-                rslt = bmp3_set_op_mode(dev);
+                settings.op_mode = BMP3_MODE_SLEEP;
+                rslt = bmp3_set_op_mode(&settings, dev);
             }
         }
     }
@@ -223,12 +240,12 @@ static int8_t validate_trimming_param(struct bmp3_dev *dev)
         rslt = bmp3_get_regs(0x30, &stored_crc, 1, dev);
         if (stored_crc != crc)
         {
+            LOG_ERR("Trimming data out of bound");
             rslt = BMP3_TRIMMING_DATA_OUT_OF_BOUND;
         }
     }
 
     return rslt;
-
 }
 
 /*
