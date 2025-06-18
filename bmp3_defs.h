@@ -98,15 +98,15 @@ extern "C"
 #define FALSE UINT8_C(0)
 #endif
 
-/********************************************************/
-/**\name Compiler switch macros */
+    /********************************************************/
+    /**\name Compiler switch macros */
 
-// #ifndef BMP3_64BIT_COMPENSATION /*< Check if 64bit (using BMP3_64BIT_COMPENSATION) is enabled */
-// #ifndef BMP3_FLOAT_COMPENSATION /*< If 64 bit integer data type is not enabled then enable
-//                                             * BMP3_FLOAT_COMPENSATION */
-// #define BMP3_FLOAT_COMPENSATION
-// #endif
-// #endif
+#ifndef BMP3_64BIT_COMPENSATION /*< Check if 64bit (using BMP3_64BIT_COMPENSATION) is enabled */
+#ifndef BMP3_FLOAT_COMPENSATION /*< If 64 bit integer data type is not enabled then enable \
+                                 * BMP3_FLOAT_COMPENSATION */
+#define BMP3_FLOAT_COMPENSATION
+#endif
+#endif
 
 /********************************************************/
 /**\name Macro definitions */
