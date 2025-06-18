@@ -44,7 +44,7 @@
 extern "C" {
 #endif
 
-#include "bmp3.h"
+#include "../bmp3_defs.h"
 
 /*Error codes for self test  */
 
