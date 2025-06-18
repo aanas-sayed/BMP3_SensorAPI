@@ -1312,12 +1312,19 @@ int8_t bmp3_soft_reset(struct bmp3_dev *dev)
             /* check for command error status */
             if ((cmd_err_status & BMP3_REG_CMD) || (rslt != BMP3_OK))
             {
+#ifdef __ZEPHYR__
+                LOG_ERR("BMP3 soft reset failed with error: %d", cmd_err_status & BMP3_REG_CMD);
+#endif
                 /* Command not written hence return
                  * error */
                 rslt = BMP3_E_CMD_EXEC_FAILED;
             }
         }
     }
+
+#ifdef __ZEPHYR__
+    LOG_DBG("BMP3 soft reset result: %d", rslt);
+#endif
 
     return rslt;
 }
