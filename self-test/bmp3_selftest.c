@@ -133,21 +133,16 @@ int8_t bmp3_selftest_check(struct bmp3_dev *dev)
 
     /* Reset the sensor */
     rslt = bmp3_soft_reset(dev);
-    if (rslt == BMP3_SENSOR_OK)
+    if (rslt == BMP3_OK)
     {
         rslt = bmp3_init(dev);
 
-        if (rslt == BMP3_E_COMM_FAIL || rslt == BMP3_E_DEV_NOT_FOUND)
-        {
-            rslt = BMP3_COMMUNICATION_ERROR_OR_WRONG_DEVICE;
-        }
-
-        if (rslt == BMP3_SENSOR_OK)
+        if (rslt == BMP3_OK)
         {
             rslt = validate_trimming_param(dev);
         }
 
-        if (rslt == BMP3_SENSOR_OK)
+        if (rslt == BMP3_OK)
         {
             /* Select the pressure and temperature sensor to be enabled */
             settings.press_en = BMP3_ENABLE;
@@ -161,11 +156,11 @@ int8_t bmp3_selftest_check(struct bmp3_dev *dev)
             /* Assign the settings which needs to be set in the sensor */
             settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR;
             rslt = bmp3_set_sensor_settings(settings_sel, &settings, dev);
-            if (rslt == BMP3_SENSOR_OK)
+            if (rslt == BMP3_OK)
             {
                 settings.op_mode = BMP3_MODE_NORMAL;
                 rslt = bmp3_set_op_mode(&settings, dev);
-                if (rslt == BMP3_SENSOR_OK)
+                if (rslt == BMP3_OK)
                 {
                     dev->delay_us(40000, dev->intf_ptr);
 
@@ -174,16 +169,18 @@ int8_t bmp3_selftest_check(struct bmp3_dev *dev)
 
                     /* Temperature and Pressure data are read and stored in the bmp3_data instance */
                     rslt = bmp3_get_sensor_data(sensor_comp, &data, dev);
+
+                    LOG_DBG("Temperature: %f, Pressure: %f", data.temperature, data.pressure);
                 }
             }
         }
 
-        if (rslt == BMP3_SENSOR_OK)
+        if (rslt == BMP3_OK)
         {
             rslt = analyze_sensor_data(&data);
 
             /* Set the power mode to sleep mode */
-            if (rslt == BMP3_SENSOR_OK)
+            if (rslt == BMP3_OK)
             {
                 settings.op_mode = BMP3_MODE_SLEEP;
                 rslt = bmp3_set_op_mode(&settings, dev);
@@ -199,20 +196,42 @@ int8_t bmp3_selftest_check(struct bmp3_dev *dev)
  */
 static int8_t analyze_sensor_data(const struct bmp3_data *sens_data)
 {
-    int8_t rslt = BMP3_SENSOR_OK;
+    int8_t rslt = BMP3_OK;
 
-    if ((sens_data->temperature < BMP3_MIN_TEMPERATURE) || (sens_data->temperature > BMP3_MAX_TEMPERATURE))
+    if ((sens_data->temperature < BMP3_MIN_TEMPERATURE))
     {
-        rslt = BMP3_IMPLAUSIBLE_TEMPERATURE;
+        rslt = BMP3_W_MIN_TEMP;
+        return rslt;
+    }
+    if ((sens_data->temperature > BMP3_MAX_TEMPERATURE))
+    {
+        rslt = BMP3_W_MAX_TEMP;
+        return rslt;
     }
 
-    if (rslt == BMP3_SENSOR_OK)
+#ifdef BMP3_FLOAT_COMPENSATION
+    if ((sens_data->pressure < BMP3_MIN_PRESSURE))
     {
-        if ((sens_data->pressure / 100 < BMP3_MIN_PRESSURE) || (sens_data->pressure / 100 > BMP3_MAX_PRESSURE))
-        {
-            rslt = BMP3_IMPLAUSIBLE_PRESSURE;
-        }
+        rslt = BMP3_W_MIN_PRES;
+        return rslt;
     }
+    if ((sens_data->pressure > BMP3_MAX_PRESSURE))
+    {
+        rslt = BMP3_W_MAX_PRES;
+        return rslt;
+    }
+#else
+    if ((sens_data->pressure / 100 < BMP3_MIN_PRESSURE))
+    {
+        rslt = BMP3_W_MIN_PRES;
+        return rslt;
+    }
+    if ((sens_data->pressure / 100 > BMP3_MAX_PRESSURE))
+    {
+        rslt = BMP3_W_MAX_PRES;
+        return rslt;
+    }
+#endif
 
     return rslt;
 }
@@ -229,7 +248,7 @@ static int8_t validate_trimming_param(struct bmp3_dev *dev)
     uint8_t i;
 
     rslt = bmp3_get_regs(BMP3_REG_CALIB_DATA, trim_param, 21, dev);
-    if (rslt == BMP3_SENSOR_OK)
+    if (rslt == BMP3_OK)
     {
         for (i = 0; i < 21; i++)
         {
@@ -241,7 +260,7 @@ static int8_t validate_trimming_param(struct bmp3_dev *dev)
         if (stored_crc != crc)
         {
             LOG_ERR("Trimming data out of bound");
-            rslt = BMP3_TRIMMING_DATA_OUT_OF_BOUND;
+            rslt = -10;
         }
     }
 

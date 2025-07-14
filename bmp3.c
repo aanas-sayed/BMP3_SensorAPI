@@ -1322,10 +1322,6 @@ int8_t bmp3_soft_reset(struct bmp3_dev *dev)
         }
     }
 
-#ifdef __ZEPHYR__
-    LOG_DBG("BMP3 soft reset result: %d", rslt);
-#endif
-
     return rslt;
 }
 
