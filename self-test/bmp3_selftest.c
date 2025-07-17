@@ -132,15 +132,11 @@ int8_t bmp3_selftest_check(struct bmp3_dev *dev)
     struct bmp3_settings settings = {0};
 
     /* Reset the sensor */
-    rslt = bmp3_soft_reset(dev);
+    rslt = bmp3_init(dev);
     if (rslt == BMP3_OK)
     {
-        rslt = bmp3_init(dev);
 
-        if (rslt == BMP3_OK)
-        {
-            rslt = validate_trimming_param(dev);
-        }
+        rslt = validate_trimming_param(dev);
 
         if (rslt == BMP3_OK)
         {
