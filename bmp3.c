@@ -772,9 +772,6 @@ int8_t bmp3_init(struct bmp3_dev *dev)
              * extra byte */
             dev->dummy_byte = 0;
         }
-#ifdef __ZEPHYR__
-        LOG_DBG("BMP3 interface selected as %d, dummy byte = %d", dev->intf, dev->dummy_byte);
-#endif
 
         /* Read the chip-id of bmp3 sensor */
         rslt = bmp3_get_regs(BMP3_REG_CHIP_ID, &chip_id, 1, dev);
@@ -1283,6 +1280,8 @@ int8_t bmp3_get_fifo_length(uint16_t *fifo_length, struct bmp3_dev *dev)
  */
 int8_t bmp3_soft_reset(struct bmp3_dev *dev)
 {
+    LOG_DBG("Performing soft reset");
+
     int8_t rslt;
     uint8_t reg_addr = BMP3_REG_CMD;
 
@@ -1310,10 +1309,10 @@ int8_t bmp3_soft_reset(struct bmp3_dev *dev)
             rslt = bmp3_get_regs(BMP3_REG_ERR, &cmd_err_status, 1, dev);
 
             /* check for command error status */
-            if ((cmd_err_status & BMP3_REG_CMD) || (rslt != BMP3_OK))
+            if ((cmd_err_status & BMP3_ERR_CMD) || (rslt != BMP3_OK))
             {
 #ifdef __ZEPHYR__
-                LOG_ERR("BMP3 soft reset failed with error: %d", cmd_err_status & BMP3_REG_CMD);
+                LOG_ERR("BMP3 command error status: %d", cmd_err_status & BMP3_ERR_CMD);
 #endif
                 /* Command not written hence return
                  * error */
